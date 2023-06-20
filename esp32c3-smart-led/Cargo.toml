@@ -1,0 +1,17 @@
+[package]
+name    = "esp32c3-smart-led-lighting-controller-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+embedded-time    = "0.12"
+rgb              = "0.8"
+smart-leds       = "0.3"
+smart-leds-trait = "0.2"
+esp32c3-hal      = "0.9.0"
+esp-backtrace    = { version = "0.7.0", features = ["esp32c3", "panic-handler", "exception-handler", "print-uart"] }
+esp-println      = { version = "0.5.0", features = ["esp32c3"] }
+esp-hal-smartled = { version = "0.2.0", features = ["esp32c3"] }
+
+[dependencies.lighting_controller]
+path = "../../lighting_controller"
