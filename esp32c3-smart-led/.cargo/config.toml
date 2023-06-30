@@ -1,5 +1,5 @@
 [target.riscv32imc-unknown-none-elf]
-runner = "espflash flash --port COM4 --monitor"
+runner = "espflash flash --port COM3 --monitor"
 
 [build]
 rustflags = [

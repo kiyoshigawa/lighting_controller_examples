@@ -2,22 +2,60 @@
 #![no_main]
 
 use esp32c3_hal::{
-    clock::{ClockControl},
-    IO,
-    peripherals::Peripherals,
-    prelude::*,
-    PulseControl,
-    pulse_control::ClockSource,
-    Rtc,
-    systimer::SystemTimer,
-    timer::TimerGroup,
+    clock::ClockControl, peripherals::Peripherals, prelude::*, pulse_control::ClockSource,
+    systimer::SystemTimer, timer::TimerGroup, PulseControl, Rtc, IO,
 };
 use esp_backtrace as _;
 use esp_hal_smartled::{smartLedAdapter, SmartLedsAdapter};
-use smart_leds::{brightness, gamma, SmartLedsWrite, colors::*};
-use lc::animations::{Animatable, Animation};
-use lc::{default_animations, LightingController, LogicalStrip};
+use lc::animations::{
+    background, foreground, trigger, Animatable, Animation, AnimationParameters, Direction,
+};
+use lc::colors::*;
+use lc::{LightingController, LogicalStrip};
 use lighting_controller as lc;
+use rgb::RGB8;
+use smart_leds::{brightness, gamma, SmartLedsWrite};
+
+pub const BG: background::Parameters = background::Parameters {
+    mode: background::Mode::FillRainbowRotate,
+    rainbow: R_ROYGBIV,
+    direction: Direction::Positive,
+    is_rainbow_forward: true,
+    duration_ns: 2_000_000_000,
+    subdivisions: 0,
+};
+
+pub const FG: foreground::Parameters = foreground::Parameters {
+    mode: foreground::Mode::NoForeground,
+    rainbow: R_ROYGBIV,
+    direction: Direction::Positive,
+    is_rainbow_forward: true,
+    duration_ns: 10_000_000_000,
+    step_time_ns: 1_000_000_000,
+    subdivisions: 1,
+    pixels_per_pixel_group: 1,
+};
+
+pub const TRIGGER_GLOBAL_PARAMS: trigger::GlobalParameters = trigger::GlobalParameters {
+    rainbow: R_BLACK,
+    is_rainbow_forward: true,
+    duration_ns: 10_000_000_000,
+};
+
+pub const ANI: AnimationParameters = AnimationParameters {
+    bg: BG,
+    fg: FG,
+    trigger: TRIGGER_GLOBAL_PARAMS,
+};
+
+pub const TRIGGER_PARAMS: trigger::Parameters = trigger::Parameters {
+    mode: trigger::Mode::ColorShotRainbow,
+    direction: Direction::Negative,
+    fade_in_time_ns: 500_000_000,
+    fade_out_time_ns: 500_000_000,
+    starting_offset: 0,
+    pixels_per_pixel_group: 1,
+};
 
 #[entry]
 fn main() -> ! {
@@ -61,25 +99,39 @@ fn main() -> ! {
 
     let mut led = <smartLedAdapter!(16)>::new(pulse.channel0, io.pins.gpio9);
 
-    let frame_rate = embedded_time::rate::Extensions::Hz(60);
+    let frame_rate = embedded_time::rate::Extensions::Hz(144);
     let frame_rate_in_ticks = SystemTimer::TICKS_PER_SECOND / frame_rate.0 as u64;
-    let color_buffer = &mut [BLACK; 16];
+    let color_buffer = &mut [BLACK_A; 16];
     let mut ls = LogicalStrip::new(color_buffer);
-    let a1 = &mut Animation::<16>::new(default_animations::ANI_TEST, frame_rate);
+    let a1 = &mut Animation::<16>::new(ANI, frame_rate);
     let animations: [&mut dyn Animatable; 1] = [a1];
     let mut lc = LightingController::new(animations, frame_rate);
 
     esp_println::println!("Peripherals configured, entering main loop.");
 
-    let mut last_update_time = SystemTimer::now();
+    let mut last_frame_update_time = SystemTimer::now();
+    let mut last_trigger_time = SystemTimer::now();
+
     loop {
-        if SystemTimer::now() > (last_update_time + frame_rate_in_ticks) {
-            last_update_time = SystemTimer::now();
+        // You need to limit the update calls to match the framerate using hardware timers to
+        // get accurate framerates and timing on the animations.
+        if SystemTimer::now() > (last_trigger_time + 16_000_000) {
+            last_trigger_time = SystemTimer::now();
+            lc.trigger(0, &TRIGGER_PARAMS);
+        }
+        if SystemTimer::now() > (last_frame_update_time + frame_rate_in_ticks) {
+            last_frame_update_time = SystemTimer::now();
             lc.update(&mut ls);
             led.write(brightness(
-                gamma(ls.color_buffer.iter().copied()),
+                gamma(
+                    ls.color_buffer
+                        .iter()
+                        .copied()
+                        .map(|c| RGB8::new(c.r, c.g, c.b)),
+                ),
                 50,
-            )).unwrap();
+            ))
+            .unwrap();
         }
     }
 }
