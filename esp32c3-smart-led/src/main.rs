@@ -3,7 +3,7 @@
 
 use esp32c3_hal::{
     clock::ClockControl, peripherals::Peripherals, prelude::*, pulse_control::ClockSource,
-    systimer::SystemTimer, timer::TimerGroup, PulseControl, Rtc, IO,
+    systimer::SystemTimer, timer::TimerGroup, PulseControl, Rng, Rtc, IO,
 };
 use esp_backtrace as _;
 use esp_hal_smartled::{smartLedAdapter, SmartLedsAdapter};
@@ -21,7 +21,7 @@ pub const BG: background::Parameters = background::Parameters {
     rainbow: R_ROYGBIV,
     direction: Direction::Positive,
     is_rainbow_forward: true,
-    duration_ns: 2_000_000_000,
+    duration_ns: 5_000_000_000,
     subdivisions: 0,
 };
 
@@ -29,9 +29,9 @@ pub const FG: foreground::Parameters = foreground::Parameters {
     mode: foreground::Mode::NoForeground,
     rainbow: R_ROYGBIV,
     direction: Direction::Positive,
-    is_rainbow_forward: true,
-    duration_ns: 10_000_000_000,
-    step_time_ns: 1_000_000_000,
+    is_rainbow_forward: false,
+    duration_ns: 5_000_000_000,
+    step_time_ns: 250_000_000,
     subdivisions: 1,
     pixels_per_pixel_group: 1,
 };
@@ -46,15 +46,6 @@ pub const ANI: AnimationParameters = AnimationParameters {
     bg: BG,
     fg: FG,
     trigger: TRIGGER_GLOBAL_PARAMS,
-};
-
-pub const TRIGGER_PARAMS: trigger::Parameters = trigger::Parameters {
-    mode: trigger::Mode::ColorShotRainbow,
-    direction: Direction::Negative,
-    fade_in_time_ns: 500_000_000,
-    fade_out_time_ns: 500_000_000,
-    starting_offset: 0,
-    pixels_per_pixel_group: 1,
 };
 
 #[entry]
@@ -97,6 +88,9 @@ fn main() -> ! {
     )
     .unwrap();
 
+    // Set up RNG peripheral for triger RNG seed input:
+    let mut rand = Rng::new(peripherals.RNG);
+
     let mut led = <smartLedAdapter!(16)>::new(pulse.channel0, io.pins.gpio9);
 
     let frame_rate = embedded_time::rate::Extensions::Hz(144);
@@ -115,9 +109,20 @@ fn main() -> ! {
     loop {
         // You need to limit the update calls to match the framerate using hardware timers to
         // get accurate framerates and timing on the animations.
+        // 16_000_000 clock cycles is one second
         if SystemTimer::now() > (last_trigger_time + 16_000_000) {
             last_trigger_time = SystemTimer::now();
-            lc.trigger(0, &TRIGGER_PARAMS);
+
+            let trigger_params: trigger::Parameters = trigger::Parameters {
+                mode: trigger::Mode::ColorPulseRainbow,
+                direction: Direction::Negative,
+                fade_in_time_ns: 1_000_000_000,
+                fade_out_time_ns: 1_000_000_000,
+                starting_offset: rand.random() as u16,
+                pixels_per_pixel_group: 1,
+            };
+
+            lc.trigger(0, &trigger_params);
         }
         if SystemTimer::now() > (last_frame_update_time + frame_rate_in_ticks) {
             last_frame_update_time = SystemTimer::now();
