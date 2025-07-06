@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "esp32c3-smart-led (cargo rr)",
+      "type": "shell",
+      "command": "cargo rr",
+      "options": {
+        "cwd": "${workspaceFolder}/esp32c3-smart-led"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

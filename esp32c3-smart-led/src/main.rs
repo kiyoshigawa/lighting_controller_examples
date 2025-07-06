@@ -2,22 +2,15 @@
 #![no_main]
 
 use esp32c3_hal::{
-    clock::{ClockControl},
-    IO,
-    peripherals::Peripherals,
-    prelude::*,
-    PulseControl,
-    pulse_control::ClockSource,
-    Rtc,
-    systimer::SystemTimer,
-    timer::TimerGroup,
+    clock::ClockControl, peripherals::Peripherals, prelude::*, pulse_control::ClockSource,
+    systimer::SystemTimer, timer::TimerGroup, PulseControl, Rtc, IO,
 };
 use esp_backtrace as _;
 use esp_hal_smartled::{smartLedAdapter, SmartLedsAdapter};
-use smart_leds::{brightness, gamma, SmartLedsWrite, colors::*};
 use lc::animations::{Animatable, Animation};
 use lc::{default_animations, LightingController, LogicalStrip};
 use lighting_controller as lc;
+use smart_leds::{brightness, colors::*, gamma, SmartLedsWrite};
 
 #[entry]
 fn main() -> ! {
@@ -76,10 +69,8 @@ fn main() -> ! {
         if SystemTimer::now() > (last_update_time + frame_rate_in_ticks) {
             last_update_time = SystemTimer::now();
             lc.update(&mut ls);
-            led.write(brightness(
-                gamma(ls.color_buffer.iter().copied()),
-                255,
-            )).unwrap();
+            led.write(brightness(gamma(ls.color_buffer.iter().copied()), 255))
+                .unwrap();
         }
     }
 }

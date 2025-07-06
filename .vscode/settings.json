@@ -1,0 +1,11 @@
+{
+   "rust-analyzer.diagnostics.disabled": [
+     "E0463"
+   ],
+   "editor.formatOnSave": true,
+   "files.autoSave": "afterDelay",
+   "files.autoSaveDelay": 5000,
+   "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+   }
+ }
