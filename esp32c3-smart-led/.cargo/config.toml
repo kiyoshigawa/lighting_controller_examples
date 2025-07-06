@@ -1,3 +1,6 @@
+[alias]
+rr = "run --release"
+
 [target.riscv32imc-unknown-none-elf]
 runner = "espflash flash --port COM4 --monitor"
 

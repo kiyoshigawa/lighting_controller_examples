@@ -61,7 +61,7 @@ fn main() -> ! {
 
     let mut led = <smartLedAdapter!(16)>::new(pulse.channel0, io.pins.gpio9);
 
-    let frame_rate = embedded_time::rate::Extensions::Hz(60);
+    let frame_rate = embedded_time::rate::Extensions::Hz(144);
     let frame_rate_in_ticks = SystemTimer::TICKS_PER_SECOND / frame_rate.0 as u64;
     let color_buffer = &mut [BLACK; 16];
     let mut ls = LogicalStrip::new(color_buffer);
@@ -78,7 +78,7 @@ fn main() -> ! {
             lc.update(&mut ls);
             led.write(brightness(
                 gamma(ls.color_buffer.iter().copied()),
-                50,
+                255,
             )).unwrap();
         }
     }
