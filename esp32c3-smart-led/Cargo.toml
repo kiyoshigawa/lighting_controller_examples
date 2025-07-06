@@ -15,3 +15,8 @@ esp-hal-smartled = { version = "0.2.0", features = ["esp32c3"] }
 
 [dependencies.lighting_controller]
 path = "../../lighting_controller"
+
+[[bin]]
+name = "esp32c3-smart-led-lighting-controller-example"
+path = "src/main.rs"
+harness = false
