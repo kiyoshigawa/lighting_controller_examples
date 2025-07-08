@@ -8,8 +8,23 @@ name = "esp32c3-smart-led"
 path = "./src/bin/main.rs"
 
 [dependencies]
+embedded-time = "0.12"
 critical-section = "1.2.0"
-esp-hal = { version = "1.0.0-beta.0", features = ["esp32c3"] }
+esp-hal = { version = "1.0.0-beta.1", features = ["esp32c3", "unstable"] }
+esp-backtrace = { version = "0.16.0", features = [
+    "esp32c3",
+    "panic-handler",
+    "exception-handler",
+    "println",
+] }
+esp-println = { version = "0.14.0", features = ["esp32c3"] }
+esp-hal-smartled = { version = "0.15.0", features = ["esp32c3"] }
+rgb = "0.8"
+smart-leds = "0.4"
+smart-leds-trait = "0.3"
+
+[dependencies.lighting_controller]
+path = "../../lighting_controller"
 
 [profile.dev]
 # Rust debug is too slow.
@@ -24,27 +39,3 @@ incremental = false
 lto = 'fat'
 opt-level = 's'
 overflow-checks = false
-
-
-# [package]
-# name    = "esp32c3-smart-led-lighting-controller-example"
-# version = "0.1.0"
-# edition = "2021"
-
-# [dependencies]
-# embedded-time    = "0.12"
-# rgb              = "0.8"
-# smart-leds       = "0.3"
-# smart-leds-trait = "0.2"
-# esp32c3-hal      = "0.9.0"
-# esp-backtrace    = { version = "0.7.0", features = ["esp32c3", "panic-handler", "exception-handler", "print-uart"] }
-# esp-println      = { version = "0.5.0", features = ["esp32c3"] }
-# esp-hal-smartled = { version = "0.2.0", features = ["esp32c3"] }
-
-# [dependencies.lighting_controller]
-# path = "../../lighting_controller"
-
-# [[bin]]
-# name = "esp32c3-smart-led-lighting-controller-example"
-# path = "src/main.rs"
-# harness = false
