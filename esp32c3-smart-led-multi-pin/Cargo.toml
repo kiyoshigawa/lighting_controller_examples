@@ -18,10 +18,15 @@ esp-backtrace = { version = "0.16.0", features = [
     "println",
 ] }
 esp-println = { version = "0.14.0", features = ["esp32c3"] }
-esp-hal-smartled = { version = "0.15.0", features = ["esp32c3"] }
+esp-hal-smartled = { version = "0.16.0", features = ["esp32c3"] }
 rgb = "0.8"
 smart-leds = "0.4"
 smart-leds-trait = "0.3"
+
+# [dependencies.esp-hal-smartled]
+# path = "../../esp-hal-community/esp-hal-smartled"
+# version = "0.16.0"
+# features = ["esp32c3"]
 
 [dependencies.lighting_controller]
 path = "../../lighting_controller"
