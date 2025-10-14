@@ -27,7 +27,7 @@ fn main() -> ! {
     let frame_rate_in_ticks = Duration::from_micros(6900u64);
     let color_buffer = &mut [BLACK; 16];
     let mut ls = LogicalStrip::new(color_buffer);
-    let a1 = &mut Animation::<16>::new(default_animations::ANI_TEST, frame_rate);
+    let a1 = &mut Animation::<16>::new(default_animations::ANI_DEFAULT, frame_rate);
     let animations: [&mut dyn Animatable; 1] = [a1];
     let mut lc = LightingController::new(animations, frame_rate);
 
