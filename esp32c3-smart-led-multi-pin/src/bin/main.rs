@@ -9,8 +9,8 @@ use esp_hal_smartled::{smart_led_buffer, SmartLedsAdapter};
 use esp_println::println;
 use lc::animations::{Animatable, Animation};
 use lc::{utility::default_translation_array, LightingController, LogicalStrip};
-use lighting_controller as lc;
 use lighting_controller::default_animations::ANI_DEFAULT;
+use lighting_controller::{self as lc, animations};
 use smart_leds::{brightness, colors::*, gamma, SmartLedsWrite as _};
 
 #[main]
@@ -83,8 +83,8 @@ fn main() -> ! {
     // closet wall
     let a1 = &mut Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(default_translation_array(START_CLOSET_INDEX))
-        // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
-        .set_bg_rainbow(&[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA], true)
+        .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
+        // .set_bg_rainbow(&[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA], true)
         .set_bg_duration_ns(20_000_000_000, frame_rate)
         .set_bg_subdivisions(2);
 
@@ -146,6 +146,15 @@ fn main() -> ! {
             let current_button_2_level = button_2.level();
             if (current_button_2_level == Level::Low) && (last_button_2_level == Level::High) {
                 println!("Press 2!");
+                let tp = animations::trigger::Parameters {
+                    mode: animations::trigger::Mode::ColorPulseFade,
+                    direction: animations::Direction::Positive,
+                    fade_in_time_ns: 1_000_000_000_u64,
+                    fade_out_time_ns: 1_000_000_000_u64,
+                    starting_offset: 0_u16,
+                    pixels_per_pixel_group: 2_usize,
+                };
+                lc.trigger(0, &tp);
             }
             last_button_2_level = current_button_2_level;
             last_button_2_sample_time = Instant::now();
