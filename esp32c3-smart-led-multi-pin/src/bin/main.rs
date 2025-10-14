@@ -7,7 +7,7 @@ use esp_hal::time::{Duration, Instant};
 use esp_hal::{clock::CpuClock, main, rmt::Rmt, time::Rate};
 use esp_hal_smartled::{smart_led_buffer, SmartLedsAdapter};
 use esp_println::println;
-use lc::animations::{Animatable, Animation};
+use lc::animations::{Animatable, Animation, RainbowDir};
 use lc::{utility::default_translation_array, LightingController, LogicalStrip};
 use lighting_controller::default_animations::ANI_DEFAULT;
 use lighting_controller::{self as lc, animations};
@@ -83,8 +83,11 @@ fn main() -> ! {
     // closet wall
     let a1 = &mut Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(default_translation_array(START_CLOSET_INDEX))
-        .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
-        // .set_bg_rainbow(&[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA], true)
+        // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
+        .set_bg_rainbow(
+            &[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA],
+            RainbowDir::Forward,
+        )
         .set_bg_duration_ns(20_000_000_000, frame_rate)
         .set_bg_subdivisions(2);
 
@@ -92,7 +95,10 @@ fn main() -> ! {
     let a2 = &mut Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(default_translation_array(START_WINDOW_INDEX))
         // .set_bg_rainbow(&[BLUE, BLUE_VIOLET], true) //debug colors different for each wall
-        .set_bg_rainbow(&[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA], true)
+        .set_bg_rainbow(
+            &[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA],
+            RainbowDir::Forward,
+        )
         .set_bg_duration_ns(20_000_000_000, frame_rate)
         .set_bg_subdivisions(2);
 
@@ -100,7 +106,10 @@ fn main() -> ! {
     let a3 = &mut Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(core::array::from_fn(|i| (START_NORTH_INDEX - 1) - i))
         // .set_bg_rainbow(&[YELLOW, ORANGE], true) //debug colors different for each wall
-        .set_bg_rainbow(&[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA], true)
+        .set_bg_rainbow(
+            &[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA],
+            RainbowDir::Forward,
+        )
         .set_bg_duration_ns(20_000_000_000, frame_rate)
         .set_bg_subdivisions(2);
 
@@ -108,7 +117,10 @@ fn main() -> ! {
     let a4 = &mut Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(core::array::from_fn(|i| (NUM_LEDS) - 1 - i))
         // .set_bg_rainbow(&[GREEN, DARK_GREEN], true) //debug colors different for each wall
-        .set_bg_rainbow(&[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA], true)
+        .set_bg_rainbow(
+            &[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA],
+            RainbowDir::Forward,
+        )
         .set_bg_duration_ns(20_000_000_000, frame_rate)
         .set_bg_subdivisions(2);
 
