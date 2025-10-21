@@ -82,7 +82,10 @@ fn main() -> ! {
             RainbowDir::Forward,
         )
         .set_bg_duration_ns(bg_durations.nth(2).expect("Iterates forever."), frame_rate)
-        .set_bg_subdivisions(subdivisions.nth(2).expect("Iterates forever."));
+        .set_bg_subdivisions(subdivisions.nth(2).expect("Iterates forever."))
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r3, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r4, RainbowDir::Forward);
 
     let animations: [&mut dyn Animatable; 1] = [a1];
     let mut lc = LightingController::new(animations, frame_rate);
