@@ -10,9 +10,9 @@ use esp_hal_smartled::{smart_led_buffer, SmartLedsAdapter};
 use esp_println::println;
 use lc::animations::{Animatable, Animation, RainbowDir};
 use lc::{utility::default_translation_array, LightingController, LogicalStrip};
-use lighting_controller::animations::trigger::TriggerCollection;
 use lighting_controller::default_animations::ANI_DEFAULT;
 use lighting_controller::{self as lc, animations};
+use rgb::RGB8;
 use smart_leds::{brightness, colors::*, gamma, SmartLedsWrite as _};
 
 #[main]
@@ -44,7 +44,7 @@ fn main() -> ! {
 
     let mut led_strip =
         SmartLedsAdapter::new(rmt.channel0, peripherals.GPIO6, smart_led_buffer!(NUM_LEDS));
-    const STRIP_BRIGHTNESS: u8 = 75;
+    const STRIP_BRIGHTNESS: u8 = 255;
 
     let frame_rate = embedded_time::rate::Extensions::Hz(144);
     let frame_rate_in_ticks = Duration::from_micros(6900u64);
@@ -70,7 +70,25 @@ fn main() -> ! {
     let r3 = [CYAN, PURPLE, MAGENTA, PURPLE];
     let r4 = [MAGENTA, BLACK, YELLOW, BLACK, CYAN, BLACK, ORANGE, BLACK];
     let r5 = [BLACK];
-    let rainbows = [&r1[..], &r2[..], &r3[..], &r4[..], &r5[..]];
+    let r6 = [
+        RGB8 {
+            r: 208,
+            g: 168,
+            b: 0,
+        },
+        RGB8 {
+            r: 0,
+            g: 170,
+            b: 191,
+        },
+        RGB8 {
+            r: 140,
+            g: 83,
+            b: 162,
+        },
+    ];
+    let r_trig = [GHOST_WHITE];
+    let rainbows = [&r1[..], &r2[..], &r3[..], &r4[..], &r5[..], &r6[..]];
 
     let mut rainbow_iter = rainbows.iter().cycle().copied();
 
@@ -82,10 +100,10 @@ fn main() -> ! {
             RainbowDir::Forward,
         )
         .set_bg_duration_ns(bg_durations.nth(2).expect("Iterates forever."), frame_rate)
-        .set_bg_subdivisions(subdivisions.nth(2).expect("Iterates forever."))
+        .set_bg_subdivisions(subdivisions.nth(0).expect("Iterates forever."))
         .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r3, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r4, RainbowDir::Forward);
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
     let animations: [&mut dyn Animatable; 1] = [a1];
     let mut lc = LightingController::new(animations, frame_rate);
@@ -119,8 +137,8 @@ fn main() -> ! {
                 let tp = animations::trigger::Parameters {
                     mode: animations::trigger::Mode::ColorPulseRainbow,
                     direction: animations::Direction::Positive,
-                    fade_in_time_ns: 1_000_000_000,
-                    fade_out_time_ns: 1_000_000_000,
+                    fade_in_time_ns: 250_000_000,
+                    fade_out_time_ns: 500_000_000,
                     starting_offset: rand_num,
                     pixels_per_pixel_group: 1,
                 };
