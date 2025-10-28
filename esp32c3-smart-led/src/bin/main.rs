@@ -25,6 +25,7 @@ fn main() -> ! {
     let frequency = Rate::from_mhz(80);
     let rmt = Rmt::new(peripherals.RMT, frequency).expect("Failed to initialize RMT0");
     let mut rng = Rng::new(peripherals.RNG);
+    lc::utility::set_random_seed(rng.random().into()); //set random seed using hardware peripheral
 
     // Setup GPIO Pins for buttons:
     const BUTTON_DEBOUNCE_TIME: Duration = Duration::from_millis(20);
@@ -71,21 +72,9 @@ fn main() -> ! {
     let r4 = [MAGENTA, BLACK, YELLOW, BLACK, CYAN, BLACK, ORANGE, BLACK];
     let r5 = [BLACK];
     let r6 = [
-        RGB8 {
-            r: 208,
-            g: 168,
-            b: 0,
-        },
-        RGB8 {
-            r: 0,
-            g: 170,
-            b: 191,
-        },
-        RGB8 {
-            r: 140,
-            g: 83,
-            b: 162,
-        },
+        RGB8 { r: 208, g: 168, b: 0 },
+        RGB8 { r: 0, g: 170, b: 191 },
+        RGB8 { r: 140, g: 83, b: 162 },
     ];
     let r_trig = [GHOST_WHITE];
     let rainbows = [&r1[..], &r2[..], &r3[..], &r4[..], &r5[..], &r6[..]];
@@ -96,7 +85,7 @@ fn main() -> ! {
         .set_translation_array(default_translation_array(0))
         // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
         .set_bg_rainbow(
-            rainbow_iter.next().expect("Iterates forever."),
+            rainbow_iter.nth(5).expect("Iterates forever."),
             RainbowDir::Forward,
         )
         .set_bg_duration_ns(bg_durations.nth(2).expect("Iterates forever."), frame_rate)
@@ -139,7 +128,7 @@ fn main() -> ! {
                     direction: animations::Direction::Positive,
                     fade_in_time_ns: 250_000_000,
                     fade_out_time_ns: 500_000_000,
-                    starting_offset: rand_num,
+                    starting_offset: 0,
                     pixels_per_pixel_group: 1,
                 };
                 lc.trigger(0, &tp);

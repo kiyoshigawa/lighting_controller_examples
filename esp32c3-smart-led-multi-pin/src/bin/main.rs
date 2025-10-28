@@ -3,8 +3,8 @@
 
 use esp_backtrace as _;
 use esp_hal::gpio::{Input, InputConfig, Level};
-use esp_hal::time::{Duration, Instant};
-use esp_hal::{clock::CpuClock, main, rmt::Rmt, time::Rate};
+use esp_hal::time::{Duration, Instant, Rate};
+use esp_hal::{clock::CpuClock, main, rmt::Rmt, rng::Rng};
 use esp_hal_smartled::{smart_led_buffer, SmartLedsAdapter};
 use esp_println::println;
 use lc::animations::{Animatable, Animation, RainbowDir};
@@ -84,6 +84,8 @@ fn main() -> ! {
 
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
+    let mut rng = Rng::new(peripherals.RNG);
+    lc::utility::set_random_seed(rng.random().into()); //set random seed using hardware peripheral
 
     let frequency = Rate::from_mhz(80);
     let rmt = Rmt::new(peripherals.RMT, frequency).expect("Failed to initialize RMT0");
