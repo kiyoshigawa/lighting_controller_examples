@@ -64,8 +64,6 @@ fn main() -> ! {
     .cycle()
     .copied();
 
-    let mut subdivisions = [1, 2, 3, NUM_LEDS / 5].iter().cycle().copied();
-
     let r1 = [RED, YELLOW, LIME, BLUE, MAGENTA];
     let r2 = [RED, BLACK, LIME, BLACK, BLUE, BLACK];
     let r3 = [CYAN, PURPLE, MAGENTA, PURPLE];
@@ -89,7 +87,7 @@ fn main() -> ! {
             RainbowDir::Forward,
         )
         .set_bg_duration_ns(bg_durations.nth(2).expect("Iterates forever."), frame_rate)
-        .set_bg_subdivisions(subdivisions.nth(0).expect("Iterates forever."))
+        .set_bg_subdivisions(2)
         .set_trig_duration_ns(5_000_000_000, frame_rate)
         .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
         .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
@@ -106,9 +104,11 @@ fn main() -> ! {
         if Instant::now() > (last_button_0_sample_time + BUTTON_DEBOUNCE_TIME) {
             let current_button_0_level = button_0.level();
             if (current_button_0_level == Level::Low) && (last_button_0_level == Level::High) {
-                let dur = bg_durations.next().expect("Iterates forever.");
-                println!("New Duration: {: >2}s", dur / 1_000_000_000);
-                lc.animations[0].update_bg_duration_ns(dur, frame_rate);
+                println!("New Rainbow!");
+                lc.animations[0].update_bg_rainbow(
+                    rainbow_iter.next().expect("Iterates forever."),
+                    RainbowDir::Forward,
+                );
             }
             last_button_0_level = current_button_0_level;
             last_button_0_sample_time = Instant::now();
@@ -118,9 +118,6 @@ fn main() -> ! {
         if Instant::now() > (last_button_1_sample_time + BUTTON_DEBOUNCE_TIME) {
             let current_button_1_level = button_1.level();
             if (current_button_1_level == Level::Low) && (last_button_1_level == Level::High) {
-                // let sub = subdivisions.next().expect("Iterates forever.");
-                // println!("New Subdivisions: {:?}", sub);
-                // lc.animations[0].update_bg_subdivisions(sub);
                 let rand_num: u16 = (rng.random() & 0xFFFF) as u16;
                 println!("Random Number Trigger Point: {:X}", rand_num);
                 let tp = animations::trigger::Parameters {
@@ -128,7 +125,7 @@ fn main() -> ! {
                     direction: animations::Direction::Positive,
                     fade_in_time_ns: 250_000_000,
                     fade_out_time_ns: 500_000_000,
-                    starting_offset: 0,
+                    starting_offset: rand_num,
                     pixels_per_pixel_group: 1,
                 };
                 lc.trigger(0, &tp);
@@ -141,11 +138,9 @@ fn main() -> ! {
         if Instant::now() > (last_button_2_sample_time + BUTTON_DEBOUNCE_TIME) {
             let current_button_2_level = button_2.level();
             if (current_button_2_level == Level::Low) && (last_button_2_level == Level::High) {
-                println!("New Rainbow!");
-                lc.animations[0].update_bg_rainbow(
-                    rainbow_iter.next().expect("Iterates forever."),
-                    RainbowDir::Forward,
-                );
+                let dur = bg_durations.next().expect("Iterates forever.");
+                println!("New Duration: {: >2}s", dur / 1_000_000_000);
+                lc.animations[0].update_bg_duration_ns(dur, frame_rate);
             }
             last_button_2_level = current_button_2_level;
             last_button_2_sample_time = Instant::now();

@@ -75,6 +75,7 @@ fn main() -> ! {
         RGB8 { r: 139, g: 004, b: 108 },
         RGB8 { r: 159, g: 005, b: 101 },
     ];
+    let r_trig = [GHOST_WHITE];
 
     let rainbows = [
         &OKLCH_RAINBOW[..],
@@ -122,8 +123,20 @@ fn main() -> ! {
 
     let frame_rate = embedded_time::rate::Extensions::Hz(60);
     let frame_rate_in_ticks = Duration::from_micros(16_667_u64);
+
     let color_buffer = &mut [BLACK; NUM_LEDS];
     let mut ls = LogicalStrip::new(color_buffer);
+
+    let mut bg_durations = [
+        30_000_000_000,
+        20_000_000_000,
+        10_000_000_000,
+        5_000_000_000,
+        1_000_000_000,
+    ]
+    .iter()
+    .cycle()
+    .copied();
 
     let mut rainbow_iter = rainbows.iter().cycle().copied();
     let initial_rainbow = rainbow_iter.next().expect("Iterates forever.");
@@ -134,7 +147,10 @@ fn main() -> ! {
         // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
         .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
         .set_bg_duration_ns(20_000_000_000, frame_rate)
-        .set_bg_subdivisions(2);
+        .set_bg_subdivisions(2)
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
     // window wall
     let a2 = &mut Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
@@ -142,7 +158,10 @@ fn main() -> ! {
         // .set_bg_rainbow(&[BLUE, BLUE_VIOLET], true) //debug colors different for each wall
         .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
         .set_bg_duration_ns(20_000_000_000, frame_rate)
-        .set_bg_subdivisions(2);
+        .set_bg_subdivisions(2)
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
     // door wall
     let a3 = &mut Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
@@ -150,7 +169,10 @@ fn main() -> ! {
         // .set_bg_rainbow(&[YELLOW, ORANGE], true) //debug colors different for each wall
         .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
         .set_bg_duration_ns(20_000_000_000, frame_rate)
-        .set_bg_subdivisions(2);
+        .set_bg_subdivisions(2)
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
     // north wall
     let a4 = &mut Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
@@ -158,7 +180,10 @@ fn main() -> ! {
         // .set_bg_rainbow(&[GREEN, DARK_GREEN], true) //debug colors different for each wall
         .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
         .set_bg_duration_ns(20_000_000_000, frame_rate)
-        .set_bg_subdivisions(2);
+        .set_bg_subdivisions(2)
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
     let animations: [&mut dyn Animatable; _] = [a1, a2, a3, a4];
     let mut lc = LightingController::new(animations, frame_rate);
@@ -187,7 +212,20 @@ fn main() -> ! {
         if Instant::now() > (last_button_1_sample_time + BUTTON_DEBOUNCE_TIME) {
             let current_button_1_level = button_1.level();
             if (current_button_1_level == Level::Low) && (last_button_1_level == Level::High) {
-                println!("Press 1!");
+                let rand_num: u16 = (rng.random() & 0xFFFF) as u16;
+                println!("Random Number Trigger Point: {:X}", rand_num);
+                let tp = animations::trigger::Parameters {
+                    mode: animations::trigger::Mode::ColorPulseFade,
+                    direction: animations::Direction::Positive,
+                    fade_in_time_ns: 1_000_000_000_u64,
+                    fade_out_time_ns: 1_000_000_000_u64,
+                    starting_offset: rand_num,
+                    pixels_per_pixel_group: 1,
+                };
+                lc.trigger(0, &tp);
+                lc.trigger(1, &tp);
+                lc.trigger(2, &tp);
+                lc.trigger(3, &tp);
             }
             last_button_1_level = current_button_1_level;
             last_button_1_sample_time = Instant::now();
@@ -198,15 +236,12 @@ fn main() -> ! {
             let current_button_2_level = button_2.level();
             if (current_button_2_level == Level::Low) && (last_button_2_level == Level::High) {
                 println!("Press 2!");
-                let tp = animations::trigger::Parameters {
-                    mode: animations::trigger::Mode::ColorPulseFade,
-                    direction: animations::Direction::Positive,
-                    fade_in_time_ns: 1_000_000_000_u64,
-                    fade_out_time_ns: 1_000_000_000_u64,
-                    starting_offset: 0_u16,
-                    pixels_per_pixel_group: 2_usize,
-                };
-                lc.trigger(0, &tp);
+                let dur = bg_durations.next().expect("Iterates forever.");
+                println!("New Duration: {: >2}s", dur / 1_000_000_000);
+                lc.animations[0].update_bg_duration_ns(dur, frame_rate);
+                lc.animations[1].update_bg_duration_ns(dur, frame_rate);
+                lc.animations[2].update_bg_duration_ns(dur, frame_rate);
+                lc.animations[3].update_bg_duration_ns(dur, frame_rate);
             }
             last_button_2_level = current_button_2_level;
             last_button_2_sample_time = Instant::now();
