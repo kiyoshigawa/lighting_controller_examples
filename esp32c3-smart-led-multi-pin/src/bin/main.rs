@@ -43,39 +43,33 @@ fn main() -> ! {
     const BLACK_RAINBOW: &[RGB8] = &[BLACK];
     const TYPICAL_RGB_RAINBOW: &[RGB8] = &[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA];
     const OKLCH_RAINBOW: &[RGB8] = &[
-        RGB8 { r: 179, g: 005, b: 094 },
-        RGB8 { r: 179, g: 005, b: 094 },
-        RGB8 { r: 217, g: 031, b: 078 },
         RGB8 { r: 252, g: 059, b: 041 },
         RGB8 { r: 252, g: 059, b: 041 },
-        RGB8 { r: 246, g: 071, b: 031 },
-        RGB8 { r: 240, g: 081, b: 023 },
-        RGB8 { r: 234, g: 090, b: 018 },
+        RGB8 { r: 244, g: 075, b: 028 },
+        RGB8 { r: 236, g: 087, b: 019 },
         RGB8 { r: 228, g: 097, b: 017 },
-        RGB8 { r: 228, g: 097, b: 017 },
-        RGB8 { r: 218, g: 108, b: 000 },
-        RGB8 { r: 207, g: 117, b: 000 },
-        RGB8 { r: 196, g: 125, b: 000 },
-        RGB8 { r: 184, g: 132, b: 019 },
-        RGB8 { r: 184, g: 132, b: 019 },
-        RGB8 { r: 171, g: 140, b: 000 },
-        RGB8 { r: 150, g: 150, b: 000 },
-        RGB8 { r: 118, g: 160, b: 000 },
-        RGB8 { r: 059, g: 170, b: 024 },
+        RGB8 { r: 219, g: 107, b: 000 },
+        RGB8 { r: 208, g: 116, b: 000 },
+        RGB8 { r: 197, g: 125, b: 000 },
+        RGB8 { r: 185, g: 132, b: 000 },
+        RGB8 { r: 172, g: 139, b: 013 },
+        RGB8 { r: 163, g: 144, b: 000 },
+        RGB8 { r: 149, g: 150, b: 000 },
+        RGB8 { r: 129, g: 156, b: 000 },
+        RGB8 { r: 103, g: 163, b: 000 },
         RGB8 { r: 059, g: 170, b: 024 },
         RGB8 { r: 000, g: 157, b: 106 },
         RGB8 { r: 000, g: 132, b: 146 },
         RGB8 { r: 000, g: 099, b: 163 },
         RGB8 { r: 002, g: 063, b: 155 },
-        RGB8 { r: 002, g: 063, b: 155 },
-        RGB8 { r: 055, g: 051, b: 157 },
-        RGB8 { r: 082, g: 039, b: 150 },
-        RGB8 { r: 102, g: 025, b: 136 },
-        RGB8 { r: 119, g: 003, b: 115 },
-        RGB8 { r: 139, g: 004, b: 108 },
-        RGB8 { r: 159, g: 005, b: 101 },
+        RGB8 { r: 074, g: 053, b: 165 },
+        RGB8 { r: 115, g: 042, b: 157 },
+        RGB8 { r: 150, g: 028, b: 133 },
+        RGB8 { r: 179, g: 005, b: 094 },
+        RGB8 { r: 205, g: 022, b: 084 },
+        RGB8 { r: 229, g: 040, b: 069 },
     ];
-    let r_trig = [GHOST_WHITE];
+    let r_trig = [BLACK];
 
     let rainbows = [
         &OKLCH_RAINBOW[..],
@@ -215,11 +209,11 @@ fn main() -> ! {
                 let rand_num: u16 = (rng.random() & 0xFFFF) as u16;
                 println!("Random Number Trigger Point: {:X}", rand_num);
                 let tp = animations::trigger::Parameters {
-                    mode: animations::trigger::Mode::ColorPulseFade,
+                    mode: animations::trigger::Mode::ColorShotFade,
                     direction: animations::Direction::Positive,
-                    fade_in_time_ns: 1_000_000_000_u64,
+                    fade_in_time_ns: 250_000_000_u64,
                     fade_out_time_ns: 1_000_000_000_u64,
-                    starting_offset: rand_num,
+                    starting_offset: 0,
                     pixels_per_pixel_group: 1,
                 };
                 lc.trigger(0, &tp);
