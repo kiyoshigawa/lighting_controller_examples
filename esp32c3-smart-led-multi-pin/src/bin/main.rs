@@ -17,21 +17,30 @@ use smart_leds::{brightness, colors::*, gamma, SmartLedsWrite as _};
 #[main]
 fn main() -> ! {
     // // number of LEDs on each wall of the room
-    // const NUM_LEDS_CLOSET_WALL: usize = 202;
-    // const NUM_LEDS_WINDOW_WALL: usize = 293;
-    // const NUM_LEDS_DOOR_WALL: usize = 292;
-    // const NUM_LEDS_NORTH_WALL: usize = 202;
+    #[cfg(feature = "office_lights")]
+    const NUM_LEDS_CLOSET_WALL: usize = 202;
+    #[cfg(feature = "office_lights")]
+    const NUM_LEDS_WINDOW_WALL: usize = 293;
+    #[cfg(feature = "office_lights")]
+    const NUM_LEDS_DOOR_WALL: usize = 292;
+    #[cfg(feature = "office_lights")]
+    const NUM_LEDS_NORTH_WALL: usize = 202;
 
     //number of LEDs on the test board
+    #[cfg(feature = "test_strip")]
     const NUM_LEDS_CLOSET_WALL: usize = 55;
+    #[cfg(feature = "test_strip")]
     const NUM_LEDS_WINDOW_WALL: usize = 55;
+    #[cfg(feature = "test_strip")]
     const NUM_LEDS_DOOR_WALL: usize = 51;
+    #[cfg(feature = "test_strip")]
     const NUM_LEDS_NORTH_WALL: usize = 51;
 
     // index for LED strip in logical array
     const START_CLOSET_INDEX: usize = 0;
     const START_WINDOW_INDEX: usize = NUM_LEDS_CLOSET_WALL;
     const START_DOOR_INDEX: usize = START_WINDOW_INDEX + NUM_LEDS_WINDOW_WALL;
+    #[cfg(feature = "office_lights")]
     const START_NORTH_INDEX: usize = START_DOOR_INDEX + NUM_LEDS_DOOR_WALL;
 
     const NUM_LEDS_STRIP_CLOSET_WINDOW: usize = NUM_LEDS_CLOSET_WALL + NUM_LEDS_WINDOW_WALL; //strip 1, GPIO6
@@ -42,7 +51,7 @@ fn main() -> ! {
 
     const BLACK_RAINBOW: &[RGB8] = &[BLACK];
     const TYPICAL_RGB_RAINBOW: &[RGB8] = &[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA];
-    const OKLCH_RAINBOW: &[RGB8] = &[
+    const HOMEMADE_OKLCH_RAINBOW: &[RGB8] = &[
         RGB8 { r: 252, g: 059, b: 041 },
         RGB8 { r: 252, g: 059, b: 041 },
         RGB8 { r: 244, g: 075, b: 028 },
@@ -69,11 +78,111 @@ fn main() -> ! {
         RGB8 { r: 205, g: 022, b: 084 },
         RGB8 { r: 229, g: 040, b: 069 },
     ];
+
+    const TWELVE_BIT_OKLCH_RAINBOW: &[RGB8] = &[
+        RGB8 { r: 137, g: 019, b: 120 },
+        RGB8 { r: 137, g: 019, b: 120 },
+        RGB8 { r: 147, g: 026, b: 111 },
+        RGB8 { r: 156, g: 034, b: 102 },
+        RGB8 { r: 164, g: 043, b: 094 },
+        RGB8 { r: 170, g: 051, b: 085 },
+        RGB8 { r: 179, g: 064, b: 088 },
+        RGB8 { r: 187, g: 077, b: 092 },
+        RGB8 { r: 196, g: 089, b: 096 },
+        RGB8 { r: 203, g: 101, b: 101 },
+        RGB8 { r: 214, g: 112, b: 093 },
+        RGB8 { r: 224, g: 124, b: 084 },
+        RGB8 { r: 231, g: 137, b: 075 },
+        RGB8 { r: 236, g: 151, b: 066 },
+        RGB8 { r: 242, g: 166, b: 047 },
+        RGB8 { r: 245, g: 182, b: 022 },
+        RGB8 { r: 243, g: 200, b: 000 },
+        RGB8 { r: 236, g: 219, b: 000 },
+        RGB8 { r: 217, g: 220, b: 028 },
+        RGB8 { r: 196, g: 220, b: 049 },
+        RGB8 { r: 174, g: 220, b: 067 },
+        RGB8 { r: 151, g: 219, b: 083 },
+        RGB8 { r: 133, g: 220, b: 097 },
+        RGB8 { r: 115, g: 221, b: 111 },
+        RGB8 { r: 094, g: 221, b: 124 },
+        RGB8 { r: 068, g: 221, b: 136 },
+        RGB8 { r: 044, g: 218, b: 153 },
+        RGB8 { r: 023, g: 213, b: 166 },
+        RGB8 { r: 017, g: 208, b: 177 },
+        RGB8 { r: 032, g: 203, b: 186 },
+        RGB8 { r: 013, g: 199, b: 191 },
+        RGB8 { r: 000, g: 195, b: 195 },
+        RGB8 { r: 000, g: 190, b: 199 },
+        RGB8 { r: 000, g: 185, b: 202 },
+        RGB8 { r: 000, g: 177, b: 203 },
+        RGB8 { r: 000, g: 169, b: 204 },
+        RGB8 { r: 000, g: 161, b: 204 },
+        RGB8 { r: 000, g: 152, b: 203 },
+        RGB8 { r: 013, g: 140, b: 201 },
+        RGB8 { r: 028, g: 127, b: 197 },
+        RGB8 { r: 040, g: 115, b: 192 },
+        RGB8 { r: 050, g: 101, b: 186 },
+        RGB8 { r: 069, g: 089, b: 182 },
+        RGB8 { r: 082, g: 076, b: 175 },
+        RGB8 { r: 093, g: 064, b: 165 },
+        RGB8 { r: 101, g: 050, b: 152 },
+        RGB8 { r: 111, g: 044, b: 147 },
+        RGB8 { r: 120, g: 037, b: 139 },
+        RGB8 { r: 129, g: 029, b: 130 },
+    ];
+
+    const TWELVE_BIT_OKLCH_RAINBOW_WEIGHTED: &[RGB8] = &[
+        RGB8 { r: 137, g: 019, b: 120 },
+        RGB8 { r: 137, g: 019, b: 120 },
+        RGB8 { r: 147, g: 026, b: 111 },
+        RGB8 { r: 156, g: 034, b: 102 },
+        RGB8 { r: 164, g: 043, b: 094 },
+        RGB8 { r: 170, g: 051, b: 085 },
+        RGB8 { r: 179, g: 064, b: 088 },
+        RGB8 { r: 187, g: 077, b: 092 },
+        RGB8 { r: 196, g: 089, b: 096 },
+        RGB8 { r: 203, g: 101, b: 101 },
+        RGB8 { r: 212, g: 110, b: 095 },
+        RGB8 { r: 220, g: 119, b: 088 },
+        RGB8 { r: 227, g: 129, b: 080 },
+        RGB8 { r: 232, g: 140, b: 073 },
+        RGB8 { r: 236, g: 151, b: 066 },
+        RGB8 { r: 241, g: 161, b: 054 },
+        RGB8 { r: 243, g: 171, b: 040 },
+        RGB8 { r: 245, g: 182, b: 022 },
+        RGB8 { r: 244, g: 194, b: 000 },
+        RGB8 { r: 241, g: 207, b: 000 },
+        RGB8 { r: 236, g: 219, b: 000 },
+        RGB8 { r: 223, g: 220, b: 019 },
+        RGB8 { r: 210, g: 220, b: 036 },
+        RGB8 { r: 196, g: 220, b: 049 },
+        RGB8 { r: 181, g: 220, b: 061 },
+        RGB8 { r: 167, g: 220, b: 072 },
+        RGB8 { r: 151, g: 219, b: 083 },
+        RGB8 { r: 137, g: 220, b: 094 },
+        RGB8 { r: 122, g: 221, b: 106 },
+        RGB8 { r: 106, g: 221, b: 116 },
+        RGB8 { r: 089, g: 221, b: 126 },
+        RGB8 { r: 068, g: 221, b: 136 },
+        RGB8 { r: 036, g: 216, b: 158 },
+        RGB8 { r: 016, g: 210, b: 174 },
+        RGB8 { r: 032, g: 203, b: 186 },
+        RGB8 { r: 000, g: 195, b: 195 },
+        RGB8 { r: 000, g: 185, b: 202 },
+        RGB8 { r: 000, g: 152, b: 203 },
+        RGB8 { r: 050, g: 101, b: 186 },
+        RGB8 { r: 082, g: 076, b: 175 },
+        RGB8 { r: 101, g: 050, b: 152 },
+        RGB8 { r: 114, g: 042, b: 145 },
+        RGB8 { r: 126, g: 032, b: 134 },
+    ];
     let r_trig = [BLACK];
 
     let rainbows = [
-        &OKLCH_RAINBOW[..],
         &TYPICAL_RGB_RAINBOW[..],
+        &HOMEMADE_OKLCH_RAINBOW[..],
+        &TWELVE_BIT_OKLCH_RAINBOW[..],
+        &TWELVE_BIT_OKLCH_RAINBOW_WEIGHTED[..],
         &BLACK_RAINBOW[..],
     ];
 
@@ -122,10 +231,13 @@ fn main() -> ! {
     let mut ls = LogicalStrip::new(color_buffer);
 
     let mut bg_durations = [
-        30_000_000_000,
         20_000_000_000,
+        15_000_000_000,
         10_000_000_000,
         5_000_000_000,
+        4_000_000_000,
+        3_000_000_000,
+        2_000_000_000,
         1_000_000_000,
     ]
     .iter()
@@ -133,8 +245,10 @@ fn main() -> ! {
     .copied();
 
     let mut rainbow_iter = rainbows.iter().cycle().copied();
-    let initial_rainbow = rainbow_iter.next().expect("Iterates forever.");
+    #[cfg(feature = "office_lights")]
+    let initial_rainbow = rainbow_iter.nth(3).expect("Iterates forever.");
 
+    #[cfg(feature = "office_lights")]
     // closet wall
     let a1 = &mut Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(default_translation_array(START_CLOSET_INDEX))
@@ -146,6 +260,7 @@ fn main() -> ! {
         .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
         .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
+    #[cfg(feature = "office_lights")]
     // window wall
     let a2 = &mut Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(default_translation_array(START_WINDOW_INDEX))
@@ -157,6 +272,7 @@ fn main() -> ! {
         .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
         .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
+    #[cfg(feature = "office_lights")]
     // door wall
     let a3 = &mut Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(core::array::from_fn(|i| (START_NORTH_INDEX - 1) - i))
@@ -168,6 +284,7 @@ fn main() -> ! {
         .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
         .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
+    #[cfg(feature = "office_lights")]
     // north wall
     let a4 = &mut Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(core::array::from_fn(|i| (NUM_LEDS) - 1 - i))
@@ -175,6 +292,54 @@ fn main() -> ! {
         .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
         .set_bg_duration_ns(20_000_000_000, frame_rate)
         .set_bg_subdivisions(2)
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+
+    #[cfg(feature = "test_strip")]
+    // closet wall
+    let a1 = &mut Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
+        .set_translation_array(default_translation_array(START_CLOSET_INDEX))
+        // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
+        .set_bg_rainbow(rainbows[0], RainbowDir::Forward)
+        .set_bg_duration_ns(3_000_000_000, frame_rate)
+        .set_bg_subdivisions(1)
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+
+    #[cfg(feature = "test_strip")]
+    // window wall
+    let a2 = &mut Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
+        .set_translation_array(core::array::from_fn(|i| (START_DOOR_INDEX - 1) - i))
+        // .set_bg_rainbow(&[BLUE, BLUE_VIOLET], true) //debug colors different for each wall
+        .set_bg_rainbow(rainbows[1], RainbowDir::Forward)
+        .set_bg_duration_ns(3_000_000_000, frame_rate)
+        .set_bg_subdivisions(1)
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+
+    #[cfg(feature = "test_strip")]
+    // door wall
+    let a3 = &mut Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
+        .set_translation_array(default_translation_array(START_DOOR_INDEX))
+        // .set_bg_rainbow(&[YELLOW, ORANGE], true) //debug colors different for each wall
+        .set_bg_rainbow(rainbows[2], RainbowDir::Forward)
+        .set_bg_duration_ns(3_000_000_000, frame_rate)
+        .set_bg_subdivisions(1)
+        .set_trig_duration_ns(5_000_000_000, frame_rate)
+        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+
+    #[cfg(feature = "test_strip")]
+    // north wall
+    let a4 = &mut Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
+        .set_translation_array(core::array::from_fn(|i| (NUM_LEDS) - 1 - i))
+        // .set_bg_rainbow(&[GREEN, DARK_GREEN], true) //debug colors different for each wall
+        .set_bg_rainbow(rainbows[3], RainbowDir::Forward)
+        .set_bg_duration_ns(3_000_000_000, frame_rate)
+        .set_bg_subdivisions(1)
         .set_trig_duration_ns(5_000_000_000, frame_rate)
         .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
         .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);

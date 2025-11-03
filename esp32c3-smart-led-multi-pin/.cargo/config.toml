@@ -1,5 +1,6 @@
 [alias]
-rr = "run --release"
+rr = "run --release --features office_lights"
+rrt = "run --release --features test_strip"
 
 [target.riscv32imc-unknown-none-elf]
 runner = "espflash flash --monitor --chip esp32c3"
@@ -10,7 +11,8 @@ runner = "espflash flash --monitor --chip esp32c3"
 rustflags = [
   # Required to obtain backtraces (e.g. when using the "esp-backtrace" crate.)
   # NOTE: May negatively impact performance of produced code
-  "-C", "force-frame-pointers",
+  "-C",
+  "force-frame-pointers",
 ]
 
 target = "riscv32imc-unknown-none-elf"

@@ -7,6 +7,10 @@ version = "0.1.0"
 name = "esp32c3-smart-led"
 path = "./src/bin/main.rs"
 
+[features]
+office_lights = []
+test_strip = []
+
 [dependencies]
 embedded-time = "0.12"
 critical-section = "1.2.0"
