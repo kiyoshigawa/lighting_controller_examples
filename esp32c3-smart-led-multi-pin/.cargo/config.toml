@@ -1,6 +1,6 @@
 [alias]
-rr = "run --release --features office_lights"
-rrt = "run --release --features test_strip"
+rr = "run --release --features esp32c3 --features office_lights"
+rrt = "run --release --features esp32c3 --features test_strip"
 
 [target.riscv32imc-unknown-none-elf]
 runner = "espflash flash --monitor --chip esp32c3"

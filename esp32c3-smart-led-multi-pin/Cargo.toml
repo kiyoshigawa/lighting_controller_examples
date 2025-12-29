@@ -1,28 +1,35 @@
 [package]
-edition = "2021"
-name = "esp32c3-smart-led"
+name = "esp32c3-smart-led-multi-pin"
 version = "0.1.0"
+edition = "2024"
 
 [[bin]]
 name = "esp32c3-smart-led"
 path = "./src/bin/main.rs"
 
-[features]
-office_lights = []
-test_strip = []
-
 [dependencies]
+blocking-network-stack = { git = "https://github.com/bjoernQ/blocking-network-stack.git", rev = "b3ecefc" }
+embedded-io = { version = "0.6.1", default-features = false }
+esp-alloc = { version = "0.9.0" }
+esp-backtrace = { version = "0.18.1", features = ["panic-handler", "println"] }
+esp-bootloader-esp-idf = { version = "0.4.0" }
+esp-hal = { version = "1.0.0", features = ["log-04", "unstable"] }
+esp-println = { version = "0.16.1", features = ["log-04"] }
+esp-rtos = { version = "0.2.0", features = ["esp-radio", "log-04"] }
+esp-radio = { version = "0.17.0", features = [
+    "log-04",
+    "smoltcp",
+    "unstable",
+    "wifi",
+] }
+smoltcp = { version = "0.12.0", default-features = false, features = [
+    "medium-ethernet",
+    "socket-raw",
+] }
+################ - Below are libs for my lighting stuff, not for the wifi stuff from esp-hal
 embedded-time = "0.12"
 critical-section = "1.2.0"
-esp-hal = { version = "1.0.0-beta.1", features = ["esp32c3", "unstable"] }
-esp-backtrace = { version = "0.16.0", features = [
-    "esp32c3",
-    "panic-handler",
-    "exception-handler",
-    "println",
-] }
-esp-println = { version = "0.14.0", features = ["esp32c3"] }
-esp-hal-smartled = { version = "0.16.0", features = ["esp32c3"] }
+esp-hal-smartled = { version = "0.17.0" }
 rgb = "0.8"
 smart-leds = "0.4"
 smart-leds-trait = "0.3"
@@ -34,6 +41,17 @@ smart-leds-trait = "0.3"
 
 [dependencies.lighting_controller]
 path = "../../lighting_controller"
+
+
+[features]
+test_strip = []
+esp32c3 = [
+    "esp-backtrace/esp32c3",
+    "esp-bootloader-esp-idf/esp32c3",
+    "esp-hal/esp32c3",
+    "esp-rtos/esp32c3",
+    "esp-radio/esp32c3",
+]
 
 [profile.dev]
 # Rust debug is too slow.

@@ -5,14 +5,14 @@ use esp_backtrace as _;
 use esp_hal::gpio::{Input, InputConfig, Level};
 use esp_hal::time::{Duration, Instant, Rate};
 use esp_hal::{clock::CpuClock, main, rmt::Rmt, rng::Rng};
-use esp_hal_smartled::{smart_led_buffer, SmartLedsAdapter};
+use esp_hal_smartled::{SmartLedsAdapter, smart_led_buffer};
 use esp_println::println;
 use lc::animations::{Animatable, Animation, RainbowDir};
-use lc::{utility::default_translation_array, LightingController, LogicalStrip};
+use lc::{LightingController, LogicalStrip, utility::default_translation_array};
 use lighting_controller::default_animations::ANI_DEFAULT;
 use lighting_controller::{self as lc, animations};
 use rgb::RGB8;
-use smart_leds::{brightness, colors::*, gamma, SmartLedsWrite as _};
+use smart_leds::{SmartLedsWrite as _, brightness, colors::*, gamma};
 
 #[main]
 fn main() -> ! {
@@ -51,6 +51,7 @@ fn main() -> ! {
 
     const BLACK_RAINBOW: &[RGB8] = &[BLACK];
     const TYPICAL_RGB_RAINBOW: &[RGB8] = &[RED, YELLOW, GREEN, DARK_BLUE, DARK_MAGENTA];
+    const KELVIN_2500_RAINBOW: &[RGB8] = &[RGB8 { r: 0xff, g: 0xb5, b: 0x65 }];
     const HOMEMADE_OKLCH_RAINBOW: &[RGB8] = &[
         RGB8 { r: 252, g: 059, b: 041 },
         RGB8 { r: 252, g: 059, b: 041 },
@@ -178,17 +179,22 @@ fn main() -> ! {
     ];
     let r_trig = [BLACK];
 
+    let mut r_adjustable_color = RGB8 { r: 0xff, g: 0xb5, b: 0x65 };
+    let r_adjustable = &[r_adjustable_color];
+
     let rainbows = [
         &TYPICAL_RGB_RAINBOW[..],
         &HOMEMADE_OKLCH_RAINBOW[..],
         &TWELVE_BIT_OKLCH_RAINBOW[..],
         &TWELVE_BIT_OKLCH_RAINBOW_WEIGHTED[..],
+        &KELVIN_2500_RAINBOW[..],
+        &r_adjustable[..],
         &BLACK_RAINBOW[..],
     ];
 
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
-    let mut rng = Rng::new(peripherals.RNG);
+    let rng = Rng::new();
     lc::utility::set_random_seed(rng.random().into()); //set random seed using hardware peripheral
 
     let frequency = Rate::from_mhz(80);
@@ -210,19 +216,16 @@ fn main() -> ! {
     let mut last_button_1_sample_time = Instant::now();
     let mut last_button_2_sample_time = Instant::now();
 
+    let mut led_strip_1_buffer = smart_led_buffer!(NUM_LEDS_STRIP_CLOSET_WINDOW);
+    let mut led_strip_2_buffer = smart_led_buffer!(NUM_LEDS_STRIP_DOOR_NORTH);
+
     // This strip has CLOSET_WALL and WINDOW_WALL
-    let mut led_strip_1 = SmartLedsAdapter::new(
-        rmt.channel0,
-        peripherals.GPIO6,
-        smart_led_buffer!(NUM_LEDS_STRIP_CLOSET_WINDOW),
-    );
+    let mut led_strip_1 =
+        SmartLedsAdapter::new(rmt.channel0, peripherals.GPIO6, &mut led_strip_1_buffer);
 
     // This strip has DOOR_WALL and NORTH_WALL
-    let mut led_strip_2 = SmartLedsAdapter::new(
-        rmt.channel1,
-        peripherals.GPIO5,
-        smart_led_buffer!(NUM_LEDS_STRIP_DOOR_NORTH),
-    );
+    let mut led_strip_2 =
+        SmartLedsAdapter::new(rmt.channel1, peripherals.GPIO5, &mut led_strip_2_buffer);
 
     let frame_rate = embedded_time::rate::Extensions::Hz(60);
     let frame_rate_in_ticks = Duration::from_micros(16_667_u64);
@@ -301,7 +304,7 @@ fn main() -> ! {
     let a1 = &mut Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
         .set_translation_array(default_translation_array(START_CLOSET_INDEX))
         // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
-        .set_bg_rainbow(rainbows[0], RainbowDir::Forward)
+        .set_bg_rainbow(rainbows[4], RainbowDir::Forward)
         .set_bg_duration_ns(3_000_000_000, frame_rate)
         .set_bg_subdivisions(1)
         .set_trig_duration_ns(5_000_000_000, frame_rate)
