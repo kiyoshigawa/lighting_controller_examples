@@ -1,10 +1,12 @@
 #![no_std]
 #![no_main]
 
+use embassy_executor::Spawner;
+use esp_alloc as _;
 use esp_backtrace as _;
 use esp_hal::gpio::{Input, InputConfig, Level};
 use esp_hal::time::{Duration, Instant, Rate};
-use esp_hal::{clock::CpuClock, main, rmt::Rmt, rng::Rng};
+use esp_hal::{clock::CpuClock, rmt::Rmt, rng::Rng};
 use esp_hal_smartled::{SmartLedsAdapter, smart_led_buffer};
 use esp_println::println;
 use lc::animations::{Animatable, Animation, RainbowDir};
@@ -14,35 +16,14 @@ use lighting_controller::{self as lc, animations};
 use rgb::RGB8;
 use smart_leds::{SmartLedsWrite as _, brightness, colors::*, gamma};
 
-#[main]
-fn main() -> ! {
-    // // number of LEDs on each wall of the room
-    #[cfg(feature = "office_lights")]
-    const NUM_LEDS_CLOSET_WALL: usize = 202;
-    #[cfg(feature = "office_lights")]
-    const NUM_LEDS_WINDOW_WALL: usize = 293;
-    #[cfg(feature = "office_lights")]
-    const NUM_LEDS_DOOR_WALL: usize = 292;
-    #[cfg(feature = "office_lights")]
-    const NUM_LEDS_NORTH_WALL: usize = 202;
+#[cfg(feature = "office_lights")]
+use esp32c3_smart_led_multi_pin::office_lights::*;
 
-    //number of LEDs on the test board
-    #[cfg(feature = "test_strip")]
-    const NUM_LEDS_CLOSET_WALL: usize = 55;
-    #[cfg(feature = "test_strip")]
-    const NUM_LEDS_WINDOW_WALL: usize = 55;
-    #[cfg(feature = "test_strip")]
-    const NUM_LEDS_DOOR_WALL: usize = 51;
-    #[cfg(feature = "test_strip")]
-    const NUM_LEDS_NORTH_WALL: usize = 51;
+#[cfg(feature = "test_strip")]
+use esp32c3_smart_led_multi_pin::test_strip::*;
 
-    // index for LED strip in logical array
-    const START_CLOSET_INDEX: usize = 0;
-    const START_WINDOW_INDEX: usize = NUM_LEDS_CLOSET_WALL;
-    const START_DOOR_INDEX: usize = START_WINDOW_INDEX + NUM_LEDS_WINDOW_WALL;
-    #[cfg(feature = "office_lights")]
-    const START_NORTH_INDEX: usize = START_DOOR_INDEX + NUM_LEDS_DOOR_WALL;
-
+#[esp_rtos::main]
+async fn main(spawner: Spawner) -> ! {
     const NUM_LEDS_STRIP_CLOSET_WINDOW: usize = NUM_LEDS_CLOSET_WALL + NUM_LEDS_WINDOW_WALL; //strip 1, GPIO6
     const NUM_LEDS_STRIP_DOOR_NORTH: usize = NUM_LEDS_DOOR_WALL + NUM_LEDS_NORTH_WALL; //strip 2, GPIO5
     const NUM_LEDS: usize = NUM_LEDS_STRIP_CLOSET_WINDOW + NUM_LEDS_STRIP_DOOR_NORTH;
@@ -249,105 +230,105 @@ fn main() -> ! {
 
     let mut rainbow_iter = rainbows.iter().cycle().copied();
     #[cfg(feature = "office_lights")]
-    let initial_rainbow = rainbow_iter.nth(3).expect("Iterates forever.");
+    let (mut a1, mut a2, mut a3, mut a4) = {
+        let initial_rainbow = rainbow_iter.nth(3).expect("Iterates forever.");
+        // closet wall
+        let a1 = Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
+            .set_translation_array(default_translation_array(START_CLOSET_INDEX))
+            // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
+            .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
+            .set_bg_duration_ns(20_000_000_000, frame_rate)
+            .set_bg_subdivisions(2)
+            .set_trig_duration_ns(5_000_000_000, frame_rate)
+            .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+            .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
-    #[cfg(feature = "office_lights")]
-    // closet wall
-    let a1 = &mut Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
-        .set_translation_array(default_translation_array(START_CLOSET_INDEX))
-        // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
-        .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
-        .set_bg_duration_ns(20_000_000_000, frame_rate)
-        .set_bg_subdivisions(2)
-        .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+        // window wall
+        let a2 = Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
+            .set_translation_array(default_translation_array(START_WINDOW_INDEX))
+            // .set_bg_rainbow(&[BLUE, BLUE_VIOLET], true) //debug colors different for each wall
+            .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
+            .set_bg_duration_ns(20_000_000_000, frame_rate)
+            .set_bg_subdivisions(2)
+            .set_trig_duration_ns(5_000_000_000, frame_rate)
+            .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+            .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
-    #[cfg(feature = "office_lights")]
-    // window wall
-    let a2 = &mut Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
-        .set_translation_array(default_translation_array(START_WINDOW_INDEX))
-        // .set_bg_rainbow(&[BLUE, BLUE_VIOLET], true) //debug colors different for each wall
-        .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
-        .set_bg_duration_ns(20_000_000_000, frame_rate)
-        .set_bg_subdivisions(2)
-        .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+        // door wall
+        let a3 = Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
+            .set_translation_array(core::array::from_fn(|i| (START_NORTH_INDEX - 1) - i))
+            // .set_bg_rainbow(&[YELLOW, ORANGE], true) //debug colors different for each wall
+            .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
+            .set_bg_duration_ns(20_000_000_000, frame_rate)
+            .set_bg_subdivisions(2)
+            .set_trig_duration_ns(5_000_000_000, frame_rate)
+            .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+            .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
-    #[cfg(feature = "office_lights")]
-    // door wall
-    let a3 = &mut Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
-        .set_translation_array(core::array::from_fn(|i| (START_NORTH_INDEX - 1) - i))
-        // .set_bg_rainbow(&[YELLOW, ORANGE], true) //debug colors different for each wall
-        .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
-        .set_bg_duration_ns(20_000_000_000, frame_rate)
-        .set_bg_subdivisions(2)
-        .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+        // north wall
+        let a4 = Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
+            .set_translation_array(core::array::from_fn(|i| (NUM_LEDS) - 1 - i))
+            // .set_bg_rainbow(&[GREEN, DARK_GREEN], true) //debug colors different for each wall
+            .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
+            .set_bg_duration_ns(20_000_000_000, frame_rate)
+            .set_bg_subdivisions(2)
+            .set_trig_duration_ns(5_000_000_000, frame_rate)
+            .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+            .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
-    #[cfg(feature = "office_lights")]
-    // north wall
-    let a4 = &mut Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
-        .set_translation_array(core::array::from_fn(|i| (NUM_LEDS) - 1 - i))
-        // .set_bg_rainbow(&[GREEN, DARK_GREEN], true) //debug colors different for each wall
-        .set_bg_rainbow(initial_rainbow, RainbowDir::Forward)
-        .set_bg_duration_ns(20_000_000_000, frame_rate)
-        .set_bg_subdivisions(2)
-        .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
-
-    #[cfg(feature = "test_strip")]
-    // closet wall
-    let a1 = &mut Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
-        .set_translation_array(default_translation_array(START_CLOSET_INDEX))
-        // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
-        .set_bg_rainbow(rainbows[4], RainbowDir::Forward)
-        .set_bg_duration_ns(3_000_000_000, frame_rate)
-        .set_bg_subdivisions(1)
-        .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+        (a1, a2, a3, a4)
+    };
 
     #[cfg(feature = "test_strip")]
-    // window wall
-    let a2 = &mut Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
-        .set_translation_array(core::array::from_fn(|i| (START_DOOR_INDEX - 1) - i))
-        // .set_bg_rainbow(&[BLUE, BLUE_VIOLET], true) //debug colors different for each wall
-        .set_bg_rainbow(rainbows[1], RainbowDir::Forward)
-        .set_bg_duration_ns(3_000_000_000, frame_rate)
-        .set_bg_subdivisions(1)
-        .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+    let (mut a1, mut a2, mut a3, mut a4) = {
+        // closet wall
+        let a1 = Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
+            .set_translation_array(default_translation_array(START_CLOSET_INDEX))
+            // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
+            .set_bg_rainbow(rainbows[4], RainbowDir::Forward)
+            .set_bg_duration_ns(3_000_000_000, frame_rate)
+            .set_bg_subdivisions(1)
+            .set_trig_duration_ns(5_000_000_000, frame_rate)
+            .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+            .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
-    #[cfg(feature = "test_strip")]
-    // door wall
-    let a3 = &mut Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
-        .set_translation_array(default_translation_array(START_DOOR_INDEX))
-        // .set_bg_rainbow(&[YELLOW, ORANGE], true) //debug colors different for each wall
-        .set_bg_rainbow(rainbows[2], RainbowDir::Forward)
-        .set_bg_duration_ns(3_000_000_000, frame_rate)
-        .set_bg_subdivisions(1)
-        .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+        // window wall
+        let a2 = Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
+            .set_translation_array(core::array::from_fn(|i| (START_DOOR_INDEX - 1) - i))
+            // .set_bg_rainbow(&[BLUE, BLUE_VIOLET], true) //debug colors different for each wall
+            .set_bg_rainbow(rainbows[1], RainbowDir::Forward)
+            .set_bg_duration_ns(3_000_000_000, frame_rate)
+            .set_bg_subdivisions(1)
+            .set_trig_duration_ns(5_000_000_000, frame_rate)
+            .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+            .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
-    #[cfg(feature = "test_strip")]
-    // north wall
-    let a4 = &mut Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
-        .set_translation_array(core::array::from_fn(|i| (NUM_LEDS) - 1 - i))
-        // .set_bg_rainbow(&[GREEN, DARK_GREEN], true) //debug colors different for each wall
-        .set_bg_rainbow(rainbows[3], RainbowDir::Forward)
-        .set_bg_duration_ns(3_000_000_000, frame_rate)
-        .set_bg_subdivisions(1)
-        .set_trig_duration_ns(5_000_000_000, frame_rate)
-        .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
-        .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+        // door wall
+        let a3 = Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
+            .set_translation_array(default_translation_array(START_DOOR_INDEX))
+            // .set_bg_rainbow(&[YELLOW, ORANGE], true) //debug colors different for each wall
+            .set_bg_rainbow(rainbows[2], RainbowDir::Forward)
+            .set_bg_duration_ns(3_000_000_000, frame_rate)
+            .set_bg_subdivisions(1)
+            .set_trig_duration_ns(5_000_000_000, frame_rate)
+            .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+            .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
 
-    let animations: [&mut dyn Animatable; _] = [a1, a2, a3, a4];
+        // north wall
+        let a4 = Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
+            .set_translation_array(core::array::from_fn(|i| (NUM_LEDS) - 1 - i))
+            // .set_bg_rainbow(&[GREEN, DARK_GREEN], true) //debug colors different for each wall
+            .set_bg_rainbow(rainbows[3], RainbowDir::Forward)
+            .set_bg_duration_ns(3_000_000_000, frame_rate)
+            .set_bg_subdivisions(1)
+            .set_trig_duration_ns(5_000_000_000, frame_rate)
+            .set_trig_fade_rainbow(&r_trig, RainbowDir::Forward)
+            .set_trig_incremental_rainbow(&r_trig, RainbowDir::Forward);
+
+        (a1, a2, a3, a4)
+    };
+
+    let animations: [&mut dyn Animatable; _] = [&mut a1, &mut a2, &mut a3, &mut a4];
     let mut lc = LightingController::new(animations, frame_rate);
 
     println!("Peripherals configured, entering main loop.");

@@ -9,13 +9,14 @@ path = "./src/bin/main.rs"
 
 [dependencies]
 blocking-network-stack = { git = "https://github.com/bjoernQ/blocking-network-stack.git", rev = "b3ecefc" }
+embassy-executor = "0.9.0"
 embedded-io = { version = "0.6.1", default-features = false }
 esp-alloc = { version = "0.9.0" }
 esp-backtrace = { version = "0.18.1", features = ["panic-handler", "println"] }
 esp-bootloader-esp-idf = { version = "0.4.0" }
 esp-hal = { version = "1.0.0", features = ["log-04", "unstable"] }
 esp-println = { version = "0.16.1", features = ["log-04"] }
-esp-rtos = { version = "0.2.0", features = ["esp-radio", "log-04"] }
+esp-rtos = { version = "0.2.0", features = ["esp-radio", "embassy", "log-04"] }
 esp-radio = { version = "0.17.0", features = [
     "log-04",
     "smoltcp",
@@ -45,6 +46,7 @@ path = "../../lighting_controller"
 
 [features]
 test_strip = []
+office_lights = []
 esp32c3 = [
     "esp-backtrace/esp32c3",
     "esp-bootloader-esp-idf/esp32c3",
