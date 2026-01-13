@@ -24,8 +24,10 @@ use esp32c3_smart_led_multi_pin::test_strip::*;
 
 use esp32c3_smart_led_multi_pin::default_consts::*;
 
+esp_bootloader_esp_idf::esp_app_desc!();
+
 #[esp_rtos::main]
-async fn main(spawner: Spawner) -> ! {
+async fn main(_spawner: Spawner) -> ! {
     const NUM_LEDS_STRIP_CLOSET_WINDOW: usize = NUM_LEDS_CLOSET_WALL + NUM_LEDS_WINDOW_WALL; //strip 1, GPIO6
     const NUM_LEDS_STRIP_DOOR_NORTH: usize = NUM_LEDS_DOOR_WALL + NUM_LEDS_NORTH_WALL; //strip 2, GPIO5
     const NUM_LEDS: usize = NUM_LEDS_STRIP_CLOSET_WINDOW + NUM_LEDS_STRIP_DOOR_NORTH;
@@ -34,7 +36,7 @@ async fn main(spawner: Spawner) -> ! {
 
     let r_trig = [BLACK];
 
-    let mut r_adjustable_color = RGB8 { r: 0xff, g: 0xb5, b: 0x65 };
+    let r_adjustable_color = RGB8 { r: 0xff, g: 0xb5, b: 0x65 };
     let r_adjustable = &[r_adjustable_color];
 
     let rainbows = [
