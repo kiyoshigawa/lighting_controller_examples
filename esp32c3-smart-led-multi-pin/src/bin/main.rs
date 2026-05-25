@@ -57,6 +57,8 @@ async fn main(_spawner: Spawner) -> ! {
     let frequency = Rate::from_mhz(80);
     let rmt = Rmt::new(peripherals.RMT, frequency).expect("Failed to initialize RMT0");
 
+    //TODO: I want to next add a wifi peripheral and get it to pull an IP over DHCP to see if I can get that far.
+    
     // Setup GPIO Pins for buttons:
     const BUTTON_DEBOUNCE_TIME: Duration = Duration::from_millis(20);
     let button_config = InputConfig::default().with_pull(esp_hal::gpio::Pull::Up);
@@ -103,7 +105,7 @@ async fn main(_spawner: Spawner) -> ! {
     .iter()
     .cycle()
     .copied();
-
+    
     let mut rainbow_iter = rainbows.iter().cycle().copied();
     #[cfg(feature = "office_lights")]
     let (mut a1, mut a2, mut a3, mut a4) = {
@@ -161,7 +163,7 @@ async fn main(_spawner: Spawner) -> ! {
         let a1 = Animation::<NUM_LEDS_CLOSET_WALL>::new(ANI_DEFAULT, frame_rate)
             .set_translation_array(default_translation_array(START_CLOSET_INDEX))
             // .set_bg_rainbow(&[RED, DARK_RED], true) //debug colors different for each wall
-            .set_bg_rainbow(rainbows[4], RainbowDir::Forward)
+            .set_bg_rainbow(rainbows[3], RainbowDir::Forward)
             .set_bg_duration_ns(3_000_000_000, frame_rate)
             .set_bg_subdivisions(1)
             .set_trig_duration_ns(5_000_000_000, frame_rate)
@@ -172,7 +174,7 @@ async fn main(_spawner: Spawner) -> ! {
         let a2 = Animation::<NUM_LEDS_WINDOW_WALL>::new(ANI_DEFAULT, frame_rate)
             .set_translation_array(core::array::from_fn(|i| (START_DOOR_INDEX - 1) - i))
             // .set_bg_rainbow(&[BLUE, BLUE_VIOLET], true) //debug colors different for each wall
-            .set_bg_rainbow(rainbows[1], RainbowDir::Forward)
+            .set_bg_rainbow(rainbows[2], RainbowDir::Forward)
             .set_bg_duration_ns(3_000_000_000, frame_rate)
             .set_bg_subdivisions(1)
             .set_trig_duration_ns(5_000_000_000, frame_rate)
@@ -183,7 +185,7 @@ async fn main(_spawner: Spawner) -> ! {
         let a3 = Animation::<NUM_LEDS_DOOR_WALL>::new(ANI_DEFAULT, frame_rate)
             .set_translation_array(default_translation_array(START_DOOR_INDEX))
             // .set_bg_rainbow(&[YELLOW, ORANGE], true) //debug colors different for each wall
-            .set_bg_rainbow(rainbows[2], RainbowDir::Forward)
+            .set_bg_rainbow(rainbows[1], RainbowDir::Forward)
             .set_bg_duration_ns(3_000_000_000, frame_rate)
             .set_bg_subdivisions(1)
             .set_trig_duration_ns(5_000_000_000, frame_rate)
@@ -194,7 +196,7 @@ async fn main(_spawner: Spawner) -> ! {
         let a4 = Animation::<NUM_LEDS_NORTH_WALL>::new(ANI_DEFAULT, frame_rate)
             .set_translation_array(core::array::from_fn(|i| (NUM_LEDS) - 1 - i))
             // .set_bg_rainbow(&[GREEN, DARK_GREEN], true) //debug colors different for each wall
-            .set_bg_rainbow(rainbows[3], RainbowDir::Forward)
+            .set_bg_rainbow(rainbows[0], RainbowDir::Forward)
             .set_bg_duration_ns(3_000_000_000, frame_rate)
             .set_bg_subdivisions(1)
             .set_trig_duration_ns(5_000_000_000, frame_rate)
@@ -226,6 +228,7 @@ async fn main(_spawner: Spawner) -> ! {
             last_button_0_level = current_button_0_level;
             last_button_0_sample_time = Instant::now();
         }
+        {}.await();
 
         // Button 1 Updates:
         if Instant::now() > (last_button_1_sample_time + BUTTON_DEBOUNCE_TIME) {
@@ -249,6 +252,7 @@ async fn main(_spawner: Spawner) -> ! {
             last_button_1_level = current_button_1_level;
             last_button_1_sample_time = Instant::now();
         }
+        {}.await();
 
         // Button 2 Updates:
         if Instant::now() > (last_button_2_sample_time + BUTTON_DEBOUNCE_TIME) {
@@ -265,6 +269,7 @@ async fn main(_spawner: Spawner) -> ! {
             last_button_2_level = current_button_2_level;
             last_button_2_sample_time = Instant::now();
         }
+        {}.await();
 
         // Lighting Updates:
         if Instant::now() > (last_update_time + frame_rate_in_ticks) {
@@ -295,5 +300,6 @@ async fn main(_spawner: Spawner) -> ! {
                 ))
                 .unwrap();
         }
+        {}.await();
     }
 }
